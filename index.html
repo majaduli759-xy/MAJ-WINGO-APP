@@ -7,121 +7,185 @@
 <title>MAJ SMART ANALYSIS</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#fff;font-family:Arial,sans-serif}
-header{text-align:center;padding:22px;background:#17264b;color:#62d5ff;font-size:24px;font-weight:bold}
+body{margin:0;background:#0b1228;color:white;font-family:Arial}
+header{text-align:center;padding:22px;background:#192d53;color:#62d5ff;font-size:23px;font-weight:bold}
 main{max-width:600px;margin:auto;padding:14px}
-.card{background:#18233e;border:1px solid #30466c;border-radius:14px;padding:16px;margin:14px 0}
-h3{color:#70d8ff;margin-top:0}
-button,select{padding:12px;border:0;border-radius:8px;margin:5px;font-weight:bold}
-button{cursor:pointer}
-.red{background:#f04465;color:white}.green{background:#12bb83;color:white}
-.violet{background:#9b65ee;color:white}.blue{background:#438cf5;color:white}
-.orange{background:#f6a342;color:#111}
-input,select{background:#263653;color:white;border:1px solid #52698c}
-.stat{display:flex;justify-content:space-between;padding:9px;border-bottom:1px solid #354461}
-.bar{height:12px;background:#354461;border-radius:10px;overflow:hidden;margin:8px 0}
-.fill{height:100%;background:#58c8ff}
-li{padding:8px;border-bottom:1px solid #354461}
-small{color:#b8c8e5}
+.card{background:#1b2948;padding:16px;margin:14px 0;border-radius:14px}
+input{width:100%;padding:13px;margin:7px 0;border:0;border-radius:8px}
+button{padding:12px;margin:5px;border:0;border-radius:8px;font-weight:bold;background:#54baff;color:#07162b}
+.red{background:#f04465;color:white}
+.stat{padding:10px;border-bottom:1px solid #405070}
+small{color:#bdcce8}
+#app{display:none}
+#lock{max-width:420px;margin:50px auto;padding:20px}
+#error{color:#ff7b91}
 </style>
 </head>
 <body>
 <header>💙 MAJ SMART ANALYSIS 💗</header>
+
+<div id="lock" class="card">
+<h2 id="lockTitle">🔐 Set Your PIN</h2>
+<p id="lockText">নিজের ৪ সংখ্যার PIN সেট করো।</p>
+<input id="pin1" type="password" inputmode="numeric" maxlength="4" placeholder="৪ সংখ্যার PIN">
+<input id="pin2" type="password" inputmode="numeric" maxlength="4" placeholder="PIN আবার দাও">
+<button onclick="pinAction()">CONTINUE</button>
+<p id="error"></p>
+</div>
+
+<div id="app">
 <main>
 <div class="card">
-<h3>নতুন ফলাফল যোগ করো</h3>
-<p>রঙ:</p>
-<button class="red" onclick="add('Red')">RED</button>
-<button class="green" onclick="add('Green')">GREEN</button>
-<button class="violet" onclick="add('Violet')">VIOLET</button>
-<p>সাইজ:</p>
-<button class="blue" onclick="add('Big')">BIG</button>
-<button class="orange" onclick="add('Small')">SMALL</button>
-<p><small>একটি রাউন্ডের জন্য রঙ অথবা সাইজ—যেটি যোগ করবে সেটি আলাদা এন্ট্রি হিসেবে গণনা হবে।</small></p>
+<h3>➕ নতুন রাউন্ড</h3>
+<input id="period" placeholder="Period Number">
+<input id="result" type="number" min="0" max="9" placeholder="Result Number (0-9)">
+<button onclick="addRound()">ADD RESULT</button>
+<p id="roundError"></p>
 </div>
 
 <div class="card">
-<h3>📊 মোট পরিসংখ্যান</h3>
-<div id="stats"></div>
+<h3>📊 মোট রাউন্ড</h3>
+<div id="total"></div>
 </div>
 
 <div class="card">
-<h3>🔎 শেষ ১০টি এন্ট্রি</h3>
-<div id="last10"></div>
+<h3>🎨 Color Analysis</h3>
+<div id="colors"></div>
 </div>
 
 <div class="card">
-<h3>📈 Smart Analysis</h3>
-<div id="analysis"></div>
-<p><small>এটি অতীতের ফলের হিসাব। পরের ফল অনুমান বা নিশ্চিত জয়ের নিশ্চয়তা দেয় না।</small></p>
+<h3>📏 Big / Small Analysis</h3>
+<div id="sizes"></div>
 </div>
 
 <div class="card">
-<h3>🧾 ইতিহাস</h3>
-<ol id="history"></ol>
-<button class="red" onclick="clearData()">সব মুছুন</button>
+<h3>📜 শেষ ১০০ রাউন্ড</h3>
+<div id="history"></div>
 </div>
+
+<div class="card">
+<h3>🔐 PIN Settings</h3>
+<input id="oldPin" type="password" inputmode="numeric" maxlength="4" placeholder="বর্তমান PIN">
+<input id="newPin" type="password" inputmode="numeric" maxlength="4" placeholder="নতুন ৪ সংখ্যার PIN">
+<button onclick="changePin()">CHANGE PIN</button>
+<button class="red" onclick="logout()">LOCK APP</button>
+<p id="pinMessage"></p>
+</div>
+
+<p><small>এটি অতীতের ফলের পরিসংখ্যান দেখায়, ভবিষ্যতের ফল নিশ্চিত করে না।</small></p>
 </main>
+</div>
 
 <script>
-let data=[];
-try{data=JSON.parse(localStorage.getItem('majData')||'[]')}catch(e){data=[]}
+let rounds=[];
+try{
+ rounds=JSON.parse(localStorage.getItem('majRounds')||'[]');
+ if(!Array.isArray(rounds))rounds=[];
+}catch(e){rounds=[];}
 
-function save(){
- localStorage.setItem('majData',JSON.stringify(data.slice(-100)));
-}
-function add(value){
- data.push({value,time:new Date().toLocaleString()});
- data=data.slice(-100);
- save();
- render();
-}
-function count(value){
- return data.filter(x=>x.value===value).length;
-}
-function percent(n,total){
- return total ? (n/total*100).toFixed(1)+'%' : '0%';
-}
-function render(){
- const colors=['Red','Green','Violet'];
- const sizes=['Big','Small'];
- let html='<div class="stat"><b>মোট এন্ট্রি</b><b>'+data.length+'</b></div>';
- [...colors,...sizes].forEach(v=>{
-  html+='<div class="stat"><span>'+v+'</span><b>'+count(v)+' ('+percent(count(v),data.length)+')</b></div>';
- });
- document.getElementById('stats').innerHTML=html;
+let savedPin=localStorage.getItem('majPin');
 
- let recent=data.slice(-10).reverse();
- document.getElementById('last10').innerHTML=recent.length?
- recent.map((x,i)=>'<div class="stat"><span>'+(i+1)+'. '+x.value+'</span><small>'+x.time+'</small></div>').join('')
- :'<small>এখনো কোনো ফল যোগ করা হয়নি।</small>';
+function pinAction(){
+ const a=document.getElementById('pin1').value;
+ const b=document.getElementById('pin2').value;
+ const err=document.getElementById('error');
 
- let colorTotal=colors.reduce((a,v)=>a+count(v),0);
- let sizeTotal=sizes.reduce((a,v)=>a+count(v),0);
- let a='<b>রঙের হিসাব</b>';
- colors.forEach(v=>{
-  let p=percent(count(v),colorTotal);
-  a+='<p>'+v+' — '+p+'</p><div class="bar"><div class="fill" style="width:'+p+'"></div></div>';
- });
- a+='<b>সাইজের হিসাব</b>';
- sizes.forEach(v=>{
-  let p=percent(count(v),sizeTotal);
-  a+='<p>'+v+' — '+p+'</p><div class="bar"><div class="fill" style="width:'+p+'"></div></div>';
- });
- a+='<p><b>বিশ্লেষণ:</b> '+(data.length<10?'আরও '+(10-data.length)+'টি এন্ট্রি যোগ করলে ১০টির হিসাব দেখা যাবে।':'১০০টি পর্যন্ত সাম্প্রতিক এন্ট্রির পরিসংখ্যান দেখানো হচ্ছে।')+'</p>';
- a+='<p>ডেটার পরিমাণ: '+data.length+' / 100</p>';
- document.getElementById('analysis').innerHTML=a;
-
- document.getElementById('history').innerHTML=data.slice().reverse().map(x=>'<li>'+x.value+' — '+x.time+'</li>').join('');
-}
-function clearData(){
- if(confirm('সব ইতিহাস মুছে ফেলবে?')){
-  data=[];
-  save();
-  render();
+ if(!savedPin){
+  if(!/^\d{4}$/.test(a)||a!==b){
+   err.textContent='দুটি ঘরে একই ৪ সংখ্যার PIN দাও।';
+   return;
+  }
+  localStorage.setItem('majPin',a);
+  savedPin=a;
+  enterApp();
+ }else{
+  if(a===savedPin){
+   enterApp();
+  }else{
+   err.textContent='ভুল PIN। আবার চেষ্টা করো।';
+  }
  }
 }
-render();
+function enterApp(){
+ document.getElementById('lock').style.display='none';
+ document.getElementById('app').style.display='block';
+ render();
+}
+function logout(){
+ document.getElementById('app').style.display='none';
+ document.getElementById('lock').style.display='block';
+ document.getElementById('lockTitle').textContent='🔐 Enter Your PIN';
+ document.getElementById('lockText').textContent='অ্যাপে ঢুকতে ৪ সংখ্যার PIN দাও।';
+ document.getElementById('pin2').style.display='none';
+ document.getElementById('pin1').value='';
+ document.getElementById('pin1').placeholder='৪ সংখ্যার PIN';
+ document.getElementById('error').textContent='';
+}
+function changePin(){
+ const old=document.getElementById('oldPin').value;
+ const next=document.getElementById('newPin').value;
+ const msg=document.getElementById('pinMessage');
+ if(old!==savedPin){
+  msg.textContent='বর্তমান PIN সঠিক নয়।';return;
+ }
+ if(!/^\d{4}$/.test(next)){
+  msg.textContent='নতুন PIN অবশ্যই ৪ সংখ্যার হতে হবে।';return;
+ }
+ localStorage.setItem('majPin',next);
+ savedPin=next;
+ msg.textContent='PIN পরিবর্তন হয়েছে।';
+ document.getElementById('oldPin').value='';
+ document.getElementById('newPin').value='';
+}
+function getColor(n){
+ if(n===0||n===5)return 'Violet';
+ return [1,3,7,9].includes(n)?'Green':'Red';
+}
+function getSize(n){return n>=5?'Big':'Small';}
+function addRound(){
+ const p=document.getElementById('period').value.trim();
+ const raw=document.getElementById('result').value;
+ const n=Number(raw);
+ const err=document.getElementById('roundError');
+ if(!p||raw===''||!Number.isInteger(n)||n<0||n>9){
+  err.textContent='সঠিক Period Number ও ০–৯ Result Number দাও.';return;
+ }
+ if(rounds.some(x=>x.period===p)){
+  err.textContent='এই Period Number আগে যোগ করা হয়েছে।';return;
+ }
+ rounds.push({period:p,result:n,color:getColor(n),size:getSize(n)});
+ rounds=rounds.slice(-100);
+ localStorage.setItem('majRounds',JSON.stringify(rounds));
+ document.getElementById('period').value='';
+ document.getElementById('result').value='';
+ err.textContent='';
+ render();
+}
+function stats(key,values){
+ return values.map(v=>{
+  const c=rounds.filter(x=>x[key]===v).length;
+  const pct=rounds.length?(c/rounds.length*100).toFixed(1):'0.0';
+  return '<div class="stat">'+v+': '+c+' ('+pct+'%)</div>';
+ }).join('');
+}
+function safe(s){
+ return String(s).replace(/[&<>"']/g,c=>({
+ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+ })[c]);
+}
+function render(){
+ document.getElementById('total').textContent=rounds.length+' / 100';
+ document.getElementById('colors').innerHTML=stats('color',['Red','Green','Violet']);
+ document.getElementById('sizes').innerHTML=stats('size',['Big','Small']);
+ document.getElementById('history').innerHTML=rounds.slice().reverse().map(x=>
+ '<div class="stat">Period '+safe(x.period)+' | Result '+x.result+' | '+x.color+' | '+x.size+'</div>'
+ ).join('')||'এখনো কোনো রাউন্ড নেই।';
+}
+if(savedPin){
+ document.getElementById('lockTitle').textContent='🔐 Enter Your PIN';
+ document.getElementById('lockText').textContent='অ্যাপে ঢুকতে PIN দাও।';
+ document.getElementById('pin2').style.display='none';
+}
 </script>
 </body>
 </html>
