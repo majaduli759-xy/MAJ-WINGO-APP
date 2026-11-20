@@ -1,95 +1,127 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MAJ WINGO STATS</title>
+<title>MAJ SMART ANALYSIS</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;padding:20px;
- background:linear-gradient(140deg,#07152f,#241044);
- color:white;font-family:Arial,sans-serif;
-}
-.container{max-width:480px;margin:auto}
-h1{text-align:center;color:#65baff}
-h1 span{color:#ff72c9}
-.card{
- background:#18264b;padding:18px;
- border:1px solid #5365a5;
- border-radius:16px;margin:16px 0;
-}
-button,select{
- padding:12px;border:0;border-radius:9px;
- margin:5px;font-weight:bold;
-}
-button{background:#ff72c9;color:#17112b}
-select{background:#65baff;color:#07152f}
-.stats{display:flex;justify-content:space-around;text-align:center}
-.number{font-size:25px;color:#65baff}
-#history div{padding:10px;border-bottom:1px solid #5365a5}
+body{margin:0;background:#0b1020;color:#fff;font-family:Arial,sans-serif}
+header{text-align:center;padding:22px;background:#17264b;color:#62d5ff;font-size:24px;font-weight:bold}
+main{max-width:600px;margin:auto;padding:14px}
+.card{background:#18233e;border:1px solid #30466c;border-radius:14px;padding:16px;margin:14px 0}
+h3{color:#70d8ff;margin-top:0}
+button,select{padding:12px;border:0;border-radius:8px;margin:5px;font-weight:bold}
+button{cursor:pointer}
+.red{background:#f04465;color:white}.green{background:#12bb83;color:white}
+.violet{background:#9b65ee;color:white}.blue{background:#438cf5;color:white}
+.orange{background:#f6a342;color:#111}
+input,select{background:#263653;color:white;border:1px solid #52698c}
+.stat{display:flex;justify-content:space-between;padding:9px;border-bottom:1px solid #354461}
+.bar{height:12px;background:#354461;border-radius:10px;overflow:hidden;margin:8px 0}
+.fill{height:100%;background:#58c8ff}
+li{padding:8px;border-bottom:1px solid #354461}
+small{color:#b8c8e5}
 </style>
 </head>
 <body>
-<div class="container">
-<h1>MAJ <span>WINGO</span> STATS</h1>
-
+<header>💙 MAJ SMART ANALYSIS 💗</header>
+<main>
 <div class="card">
-<h3>Result Statistics</h3>
-<div class="stats">
-<div>RED<div class="number" id="red">0</div></div>
-<div>GREEN<div class="number" id="green">0</div></div>
-<div>VIOLET<div class="number" id="violet">0</div></div>
-</div>
-</div>
-
-<div class="card">
-<h3>Add Previous Result</h3>
-<select id="color">
-<option value="Red">Red</option>
-<option value="Green">Green</option>
-<option value="Violet">Violet</option>
-</select>
-<select id="size">
-<option value="Big">Big</option>
-<option value="Small">Small</option>
-</select>
-<button onclick="addResult()">ADD RESULT</button>
+<h3>নতুন ফলাফল যোগ করো</h3>
+<p>রঙ:</p>
+<button class="red" onclick="add('Red')">RED</button>
+<button class="green" onclick="add('Green')">GREEN</button>
+<button class="violet" onclick="add('Violet')">VIOLET</button>
+<p>সাইজ:</p>
+<button class="blue" onclick="add('Big')">BIG</button>
+<button class="orange" onclick="add('Small')">SMALL</button>
+<p><small>একটি রাউন্ডের জন্য রঙ অথবা সাইজ—যেটি যোগ করবে সেটি আলাদা এন্ট্রি হিসেবে গণনা হবে।</small></p>
 </div>
 
 <div class="card">
-<h3>Result History</h3>
-<div id="history">No results added</div>
-<button onclick="clearHistory()">CLEAR HISTORY</button>
+<h3>📊 মোট পরিসংখ্যান</h3>
+<div id="stats"></div>
 </div>
+
+<div class="card">
+<h3>🔎 শেষ ১০টি এন্ট্রি</h3>
+<div id="last10"></div>
 </div>
+
+<div class="card">
+<h3>📈 Smart Analysis</h3>
+<div id="analysis"></div>
+<p><small>এটি অতীতের ফলের হিসাব। পরের ফল অনুমান বা নিশ্চিত জয়ের নিশ্চয়তা দেয় না।</small></p>
+</div>
+
+<div class="card">
+<h3>🧾 ইতিহাস</h3>
+<ol id="history"></ol>
+<button class="red" onclick="clearData()">সব মুছুন</button>
+</div>
+</main>
 
 <script>
-let results=[];
+let data=[];
+try{data=JSON.parse(localStorage.getItem('majData')||'[]')}catch(e){data=[]}
 
-function addResult(){
- const color=document.getElementById('color').value;
- const size=document.getElementById('size').value;
- results.unshift({color,size});
+function save(){
+ localStorage.setItem('majData',JSON.stringify(data.slice(-100)));
+}
+function add(value){
+ data.push({value,time:new Date().toLocaleString()});
+ data=data.slice(-100);
+ save();
  render();
 }
-
+function count(value){
+ return data.filter(x=>x.value===value).length;
+}
+function percent(n,total){
+ return total ? (n/total*100).toFixed(1)+'%' : '0%';
+}
 function render(){
- ['Red','Green','Violet'].forEach(c=>{
- document.getElementById(c.toLowerCase()).textContent=
- results.filter(r=>r.color===c).length;
+ const colors=['Red','Green','Violet'];
+ const sizes=['Big','Small'];
+ let html='<div class="stat"><b>মোট এন্ট্রি</b><b>'+data.length+'</b></div>';
+ [...colors,...sizes].forEach(v=>{
+  html+='<div class="stat"><span>'+v+'</span><b>'+count(v)+' ('+percent(count(v),data.length)+')</b></div>';
  });
+ document.getElementById('stats').innerHTML=html;
 
- document.getElementById('history').innerHTML=
- results.map((r,i)=>
- `<div>${i+1}. ${r.color} — ${r.size}</div>`
- ).join('');
-}
+ let recent=data.slice(-10).reverse();
+ document.getElementById('last10').innerHTML=recent.length?
+ recent.map((x,i)=>'<div class="stat"><span>'+(i+1)+'. '+x.value+'</span><small>'+x.time+'</small></div>').join('')
+ :'<small>এখনো কোনো ফল যোগ করা হয়নি।</small>';
 
-function clearHistory(){
- results=[];
- render();
+ let colorTotal=colors.reduce((a,v)=>a+count(v),0);
+ let sizeTotal=sizes.reduce((a,v)=>a+count(v),0);
+ let a='<b>রঙের হিসাব</b>';
+ colors.forEach(v=>{
+  let p=percent(count(v),colorTotal);
+  a+='<p>'+v+' — '+p+'</p><div class="bar"><div class="fill" style="width:'+p+'"></div></div>';
+ });
+ a+='<b>সাইজের হিসাব</b>';
+ sizes.forEach(v=>{
+  let p=percent(count(v),sizeTotal);
+  a+='<p>'+v+' — '+p+'</p><div class="bar"><div class="fill" style="width:'+p+'"></div></div>';
+ });
+ a+='<p><b>বিশ্লেষণ:</b> '+(data.length<10?'আরও '+(10-data.length)+'টি এন্ট্রি যোগ করলে ১০টির হিসাব দেখা যাবে।':'১০০টি পর্যন্ত সাম্প্রতিক এন্ট্রির পরিসংখ্যান দেখানো হচ্ছে।')+'</p>';
+ a+='<p>ডেটার পরিমাণ: '+data.length+' / 100</p>';
+ document.getElementById('analysis').innerHTML=a;
+
+ document.getElementById('history').innerHTML=data.slice().reverse().map(x=>'<li>'+x.value+' — '+x.time+'</li>').join('');
 }
+function clearData(){
+ if(confirm('সব ইতিহাস মুছে ফেলবে?')){
+  data=[];
+  save();
+  render();
+ }
+}
+render();
 </script>
 </body>
 </html>
